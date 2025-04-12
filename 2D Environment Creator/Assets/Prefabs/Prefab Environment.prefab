@@ -149,7 +149,7 @@ GameObject:
   - component: {fileID: 597278123972502883}
   - component: {fileID: 7144509389223228757}
   m_Layer: 5
-  m_Name: OpenEnvironmentButton
+  m_Name: OpenEnvironment
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

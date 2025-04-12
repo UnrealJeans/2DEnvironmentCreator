@@ -3,15 +3,17 @@ using UnityEngine.UI;
 using TMPro;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Environments
 {
-    public class ProfielManagerScript : MonoBehaviour
+    public class EnvironmentManagerScript : MonoBehaviour
     {
         [Header("Scenes")]
         public GameObject EnvironmentSelectieScherm;
         public GameObject EnvironmentAanmakenScherm;
         public GameObject StartScherm;
+        public GameObject Environment;
 
         [Header("EnvironmentSelectieScherm Buttons")]
         public Button EnvironmentToevoegenButton;
@@ -35,11 +37,14 @@ namespace Environments
         private int spawnIndex = 0;
         private List<Environment> environments = new List<Environment>();
 
+        // Reference to the EnvironmentApiClient
+        public EnvironmentApiClient apiClient;
+
         void Start()
         {
             Reset();
             EnvironmentToevoegenButton.onClick.AddListener(EnvironmentToevoegenScene);
-            TerugNaarSelectie.onClick.AddListener(NaarEnvironmentSelectie);
+            TerugNaarSelectie.onClick.AddListener(async () => await NaarEnvironmentSelectie());
             MaakEnvironmentButton.onClick.AddListener(MaakEnvironment);
         }
 
@@ -55,14 +60,16 @@ namespace Environments
             EnvironmentAanmakenScherm.SetActive(true);
         }
 
-        public void NaarEnvironmentSelectie()
+        public async Task NaarEnvironmentSelectie()
         {
             EnvironmentSelectieScherm.SetActive(true);
             EnvironmentAanmakenScherm.SetActive(false);
+
+            await FetchEnvironments();
             DisplayEnvironments();
         }
 
-        public void MaakEnvironment()
+        public async void MaakEnvironment()
         {
             Debug.Log("MaakEnvironment() function started!");
 
@@ -72,17 +79,55 @@ namespace Environments
                 return;
             }
 
-            // Create a new environment and add it to the list
-            Environment newEnvironment = new Environment
+            // Create a new environment using the API
+            var newEnvironment = new Environment
             {
                 id = Guid.NewGuid().ToString(),
                 name = EnvironmentNaam.text
             };
-            environments.Add(newEnvironment);
 
-            Debug.Log("Mock: Environment Created with name: " + newEnvironment.name);
+            try
+            {
+                var response = await apiClient.CreateEnvironment(newEnvironment);
+                if (response is WebRequestData<Environment> createdEnvironmentData)
+                {
+                    environments.Add(createdEnvironmentData.Data);
+                    Debug.Log("Environment created successfully via API: " + createdEnvironmentData.Data.name);
+                }
+                else
+                {
+                    Debug.LogError("Failed to create environment via API.");
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError("Error while creating environment: " + ex.Message);
+            }
 
-            NaarEnvironmentSelectie();
+            await NaarEnvironmentSelectie();
+        }
+
+        private async Task FetchEnvironments()
+        {
+            Debug.Log("Fetching environments from API...");
+
+            try
+            {
+                var response = await apiClient.ReadEnvironments();
+                if (response is WebRequestData<List<Environment>> environmentsData)
+                {
+                    environments = environmentsData.Data;
+                    Debug.Log("Environments fetched successfully from API.");
+                }
+                else
+                {
+                    Debug.LogError("Failed to fetch environments from API.");
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError("Error while fetching environments: " + ex.Message);
+            }
         }
 
         private void DisplayEnvironments()
@@ -120,12 +165,29 @@ namespace Environments
                     {
                         button.onClick.AddListener(() => DeleteEnvironment(environment));
                         Debug.Log($"Delete button assigned for environment: {environment.name}");
-                        break;
+                    }
+                    else if (button.name == "OpenEnvironment")
+                    {
+                        button.onClick.AddListener(() => OpenEnvironmentScreen(environment));
+                        Debug.Log($"Open button assigned for environment: {environment.name}");
                     }
                 }
 
                 aantalEnvironmentsAangemaakt++;
             }
+        }
+
+        private void OpenEnvironmentScreen(Environment environment)
+        {
+            Debug.Log($"Opening environment: {environment.name}");
+
+            // Activate the Environment screen and deactivate others
+            EnvironmentSelectieScherm.SetActive(false);
+            EnvironmentAanmakenScherm.SetActive(false);
+            Environment.SetActive(true);
+
+            // Optionally, you can pass the environment data to the Environment screen here
+            // Example: UpdateEnvironmentScreen(environment);
         }
 
         private void DeleteEnvironment(Environment environment)
@@ -138,12 +200,5 @@ namespace Environments
             // Refresh the UI
             DisplayEnvironments();
         }
-    }
-
-    [Serializable]
-    public class Environment
-    {
-        public string id;
-        public string name;
     }
 }
