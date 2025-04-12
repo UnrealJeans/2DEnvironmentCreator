@@ -163,7 +163,7 @@ namespace Environments
                 {
                     if (button.name == "DeleteEnvironmentButton")
                     {
-                        button.onClick.AddListener(() => DeleteEnvironment(environment));
+                        button.onClick.AddListener(async () => await DeleteEnvironment(environment));
                         Debug.Log($"Delete button assigned for environment: {environment.name}");
                     }
                     else if (button.name == "OpenEnvironment")
@@ -190,12 +190,29 @@ namespace Environments
             // Example: UpdateEnvironmentScreen(environment);
         }
 
-        private void DeleteEnvironment(Environment environment)
+        private async Task DeleteEnvironment(Environment environment)
         {
             Debug.Log($"Deleting environment: {environment.name}");
 
-            // Remove the environment from the list
-            environments.Remove(environment);
+            try
+            {
+                // Call the API to delete the environment
+                var response = await apiClient.DeleteEnvironment(environment.id);
+                if (response != null)
+                {
+                    // Remove the environment from the local list
+                    environments.Remove(environment);
+                    Debug.Log($"Environment deleted successfully from API: {environment.name}");
+                }
+                else
+                {
+                    Debug.LogError($"Failed to delete environment from API: {environment.name}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"Error while deleting environment: {ex.Message}");
+            }
 
             // Refresh the UI
             DisplayEnvironments();
