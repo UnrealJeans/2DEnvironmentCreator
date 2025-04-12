@@ -35,10 +35,14 @@ namespace Environments
         public GameObject[] Environments;
 
         private int spawnIndex = 0;
-        private List<Environment> environments = new List<Environment>();
 
+        [Header("API zooi")]
+        private List<Environment> environments = new List<Environment>();
         // Reference to the EnvironmentApiClient
         public EnvironmentApiClient apiClient;
+
+        [Header("Debug")]
+        public TMP_Text Test;
 
         void Start()
         {
@@ -46,6 +50,7 @@ namespace Environments
             EnvironmentToevoegenButton.onClick.AddListener(EnvironmentToevoegenScene);
             TerugNaarSelectie.onClick.AddListener(async () => await NaarEnvironmentSelectie());
             MaakEnvironmentButton.onClick.AddListener(MaakEnvironment);
+            FetchEnvironments();
         }
 
         public void Reset()
@@ -181,6 +186,17 @@ namespace Environments
         {
             Debug.Log($"Opening environment: {environment.name}");
 
+            // Update the Test TMP_Text component with the environment ID
+            if (Test != null)
+            {
+                Test.text = $"Environment ID: {environment.id}";
+                Debug.Log($"Test text updated to: {environment.id}");
+            }
+            else
+            {
+                Debug.LogError("Test TMP_Text component is not assigned!");
+            }
+
             // Activate the Environment screen and deactivate others
             EnvironmentSelectieScherm.SetActive(false);
             EnvironmentAanmakenScherm.SetActive(false);
@@ -189,6 +205,7 @@ namespace Environments
             // Optionally, you can pass the environment data to the Environment screen here
             // Example: UpdateEnvironmentScreen(environment);
         }
+
 
         private async Task DeleteEnvironment(Environment environment)
         {
