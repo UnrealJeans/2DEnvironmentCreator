@@ -81,7 +81,7 @@ SpriteRenderer:
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 1, y: 1}
+  m_Size: {x: 0.64, y: 0.64}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
@@ -133,8 +133,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 252e62e79b8b97a4886357a0af7972b0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  trans: {fileID: 6962084868220815341}
-  environmentManager: {fileID: 0}
+  objectManager: {fileID: 0}
+  isDragging: 0
 --- !u!61 &206695286524191361
 BoxCollider2D:
   m_ObjectHideFlags: 0

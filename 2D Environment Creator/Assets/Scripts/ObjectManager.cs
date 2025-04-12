@@ -7,6 +7,9 @@ public class ObjectManager : MonoBehaviour
 {
     // Menu om objecten vanuit te plaatsen
     public GameObject UISideMenu;
+
+    public GameObject UITopMenu;
+
     // Lijst met objecten die geplaatst kunnen worden die overeenkomen met de prefabs in de prefabs map
     public List<GameObject> prefabObjects;
 
@@ -18,12 +21,17 @@ public class ObjectManager : MonoBehaviour
     {
         // Verberg het zijmenu
         UISideMenu.SetActive(false);
+        UITopMenu.SetActive(false);
+
         // Instantieer het prefab object op de positie (0,0,0) met geen rotatie
         GameObject instanceOfPrefab = Instantiate(prefabObjects[index], Vector3.zero, Quaternion.identity);
+
         // Haal het Object2D component op van het nieuw geplaatste object
         Object2D object2D = instanceOfPrefab.GetComponent<Object2D>();
+
         // Stel de objectManager van het object in op deze instantie van ObjectManager
         object2D.objectManager = this;
+
         // Zet de isDragging eigenschap van het object op true zodat het gesleept kan worden
         object2D.isDragging = true;
     }
@@ -32,6 +40,7 @@ public class ObjectManager : MonoBehaviour
     public void ShowMenu()
     {
         UISideMenu.SetActive(true);
+        UITopMenu.SetActive(false);
     }
 
     // Methode om de huidige scène te resetten
