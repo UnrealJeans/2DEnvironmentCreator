@@ -7,15 +7,9 @@ using UnityEngine;
  * - De id is een string in plaats van een Guid omdat JsonUtility Guid niet ondersteunt. Gelukkig geeft dit geen probleem indien we gewoon een string gebruiken in Unity en een Guid in onze backend API.
 */
 [Serializable]
-public class ProfielKeuze
+public class Environment
 {
     public string id; // JSON veld, string in plaats van Guid
 
     public string name; // JSON veld, kleine letters
-
-    public string arts; // JSON veld, kleine letters
-
-    public string geboorteDatum; // JSON veld, string in plaats van DateTime
-
-    public string avatar; // JSON veld, kleine letters
 }

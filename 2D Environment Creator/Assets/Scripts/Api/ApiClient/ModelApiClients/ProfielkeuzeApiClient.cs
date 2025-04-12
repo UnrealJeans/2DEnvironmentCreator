@@ -1,82 +1,75 @@
-
-
 using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class ProfielkeuzeApiClient : MonoBehaviour
+public class EnvironmentApiClient : MonoBehaviour
 {
     public WebClient webClient;
 
-    public async Awaitable<IWebRequestReponse> ReadProfielKeuzes()
+    public async Awaitable<IWebRequestReponse> ReadEnvironments()
     {
-        string route = "/ProfielKeuze"; // Correcte route
+        string route = "/Environment"; // Correct route
         IWebRequestReponse webRequestResponse = await webClient.SendGetRequest(route);
-        return ParseProfielKeuzeListResponse(webRequestResponse);
+        return ParseEnvironmentListResponse(webRequestResponse);
     }
 
-    public async Awaitable<IWebRequestReponse> CreateProfielKeuze(ProfielKeuze profielKeuze)
+    public async Awaitable<IWebRequestReponse> CreateEnvironment(Environment environment)
     {
-        string route = "/ProfielKeuze"; // Correcte route
-        string data = JsonUtility.ToJson(profielKeuze);
+        string route = "/Environment"; // Correct route
+        string data = JsonUtility.ToJson(environment);
         IWebRequestReponse webRequestResponse = await webClient.SendPostRequest(route, data);
-        return ParseProfielKeuzeResponse(webRequestResponse);
+        return ParseEnvironmentResponse(webRequestResponse);
     }
 
-    public async Awaitable<IWebRequestReponse> DeleteProfielKeuze(string profielKeuzeId)
+    public async Awaitable<IWebRequestReponse> DeleteEnvironment(string environmentId)
     {
-        string route = "/ProfielKeuze/" + profielKeuzeId; // Correcte route
+        string route = "/Environment/" + environmentId; // Correct route
         return await webClient.SendDeleteRequest(route);
     }
 
-    private IWebRequestReponse ParseProfielKeuzeResponse(IWebRequestReponse webRequestResponse)
+    private IWebRequestReponse ParseEnvironmentResponse(IWebRequestReponse webRequestResponse)
     {
         switch (webRequestResponse)
         {
             case WebRequestData<string> data:
                 Debug.Log("Response data raw: " + data.Data);
-                ProfielKeuze profielKeuze = JsonUtility.FromJson<ProfielKeuze>(data.Data);
-                WebRequestData<ProfielKeuze> parsedWebRequestData = new WebRequestData<ProfielKeuze>(profielKeuze);
+                Environment environment = JsonUtility.FromJson<Environment>(data.Data);
+                WebRequestData<Environment> parsedWebRequestData = new WebRequestData<Environment>(environment);
                 return parsedWebRequestData;
             default:
                 return webRequestResponse;
         }
     }
 
-    private IWebRequestReponse ParseProfielKeuzeListResponse(IWebRequestReponse webRequestResponse)
+    private IWebRequestReponse ParseEnvironmentListResponse(IWebRequestReponse webRequestResponse)
     {
         switch (webRequestResponse)
         {
             case WebRequestData<string> data:
                 Debug.Log("Response data raw: " + data.Data);
-                List<ProfielKeuze> profielKeuzes = JsonHelper.ParseJsonArray<ProfielKeuze>(data.Data);
-                WebRequestData<List<ProfielKeuze>> parsedWebRequestData = new WebRequestData<List<ProfielKeuze>>(profielKeuzes);
+                List<Environment> environments = JsonHelper.ParseJsonArray<Environment>(data.Data);
+                WebRequestData<List<Environment>> parsedWebRequestData = new WebRequestData<List<Environment>>(environments);
                 return parsedWebRequestData;
             default:
                 return webRequestResponse;
         }
     }
 
-    public async void GetAllProfielInfo()
+    public async void GetAllEnvironmentInfo()
     {
-        Debug.LogError("Keuzes worden geladen");
-        IWebRequestReponse response = await ReadProfielKeuzes();
-        if (response is WebRequestData<List<ProfielKeuze>> profielKeuzesData)
+        Debug.LogError("Environments are being loaded");
+        IWebRequestReponse response = await ReadEnvironments();
+        if (response is WebRequestData<List<Environment>> environmentsData)
         {
-            List<ProfielKeuze> profielKeuzes = profielKeuzesData.Data;
-            foreach (var profielKeuze in profielKeuzes)
+            List<Environment> environments = environmentsData.Data;
+            foreach (var environment in environments)
             {
-                Debug.Log($"Name: {profielKeuze.name}, Arts: {profielKeuze.arts}, GeboorteDatum: {profielKeuze.geboorteDatum}, Avatar: {profielKeuze.avatar}");
+                Debug.Log($"Name: {environment.name}");
             }
         }
         else
         {
-            Debug.LogError("Failed to retrieve profiel keuzes.");
+            Debug.LogError("Failed to retrieve environments.");
         }
     }
 }
-
-
-
-
-
