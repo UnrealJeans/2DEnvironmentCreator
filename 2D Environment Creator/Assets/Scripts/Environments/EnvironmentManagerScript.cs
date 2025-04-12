@@ -51,6 +51,7 @@ namespace Environments
             TerugNaarSelectie.onClick.AddListener(async () => await NaarEnvironmentSelectie());
             MaakEnvironmentButton.onClick.AddListener(MaakEnvironment);
             FetchEnvironments();
+            
         }
 
         public void Reset()
@@ -133,6 +134,7 @@ namespace Environments
             {
                 Debug.LogError("Error while fetching environments: " + ex.Message);
             }
+            DisplayEnvironments();
         }
 
         private void DisplayEnvironments()

@@ -12,11 +12,12 @@ public class InlogRegistreerManager : MonoBehaviour
     // Input fields for registration
     public TMP_InputField registerEmailInputField;
     public TMP_InputField registerPasswordInputField;
+    public GameObject RegisterError;
 
     // Input fields for login
     public TMP_InputField loginEmailInputField;
     public TMP_InputField loginPasswordInputField;
-    public Button PasswordToggle;
+    public GameObject LoginError;
 
     public Button loginExit;
     public Button registerExit;
@@ -50,24 +51,24 @@ public class InlogRegistreerManager : MonoBehaviour
         switchToRegisterButton.onClick.AddListener(ShowRegisterPanel);
         loginExit.onClick.AddListener(HideLoginPanel);
         registerExit.onClick.AddListener(HideRegisterPanel);
-
-
-
-
-        // Check if the user is already logged in
-        //string token = PlayerPrefs.GetString("authToken", "");
-        //if (!string.IsNullOrEmpty(token))
-        //{
-        //    isLoggedIn = true;
-        //}
     }
 
     public async void Register()
     {
+        string password = registerPasswordInputField.text;
+
+        // Validate the password
+        if (!IsPasswordValid(password))
+        {
+            Debug.Log("Register error: Password does not meet the required criteria.");
+            RegisterError.SetActive(true); // Show the RegisterError GameObject
+            return; // Exit the method
+        }
+
         User user = new User
         {
             email = registerEmailInputField.text,
-            password = registerPasswordInputField.text
+            password = password
         };
 
         IWebRequestReponse webRequestResponse = await userApiClient.Register(user);
@@ -84,14 +85,46 @@ public class InlogRegistreerManager : MonoBehaviour
                 // Transition to Scene2
                 Scene1.SetActive(false);
                 Scene2.SetActive(true);
+
+                // Ensure RegisterError is hidden on successful registration
+                RegisterError.SetActive(false);
                 break;
             case WebRequestError errorResponse:
                 string errorMessage = errorResponse.ErrorMessage;
                 Debug.Log("Register error: " + errorMessage);
+
+                // Show the RegisterError GameObject
+                RegisterError.SetActive(true);
                 break;
             default:
                 throw new NotImplementedException("No implementation for webRequestResponse of class: " + webRequestResponse.GetType());
         }
+    }
+
+    // Helper method to validate the password
+    private bool IsPasswordValid(string password)
+    {
+        if (password.Length < 10)
+            return false;
+
+        bool hasUppercase = false;
+        bool hasLowercase = false;
+        bool hasDigit = false;
+        bool hasSpecialChar = false;
+
+        foreach (char c in password)
+        {
+            if (char.IsUpper(c)) hasUppercase = true;
+            if (char.IsLower(c)) hasLowercase = true;
+            if (char.IsDigit(c)) hasDigit = true;
+            if ("!?@#$%&".Contains(c)) hasSpecialChar = true;
+
+            // If all conditions are met, no need to continue checking
+            if (hasUppercase && hasLowercase && hasDigit && hasSpecialChar)
+                return true;
+        }
+
+        return false;
     }
 
     public async void Login()
@@ -116,15 +149,22 @@ public class InlogRegistreerManager : MonoBehaviour
                 // Transition to Scene2
                 Scene1.SetActive(false);
                 Scene2.SetActive(true);
+
+                // Ensure LoginError is hidden on successful login
+                LoginError.SetActive(false);
                 break;
             case WebRequestError errorResponse:
                 string errorMessage = errorResponse.ErrorMessage;
                 Debug.Log("Login error: " + errorMessage);
+
+                // Show the LoginError GameObject
+                LoginError.SetActive(true);
                 break;
             default:
                 throw new NotImplementedException("No implementation for webRequestResponse of class: " + webRequestResponse.GetType());
         }
     }
+
 
     public void TogglePasswordVisibilityInlog(bool isVisible)
     {
