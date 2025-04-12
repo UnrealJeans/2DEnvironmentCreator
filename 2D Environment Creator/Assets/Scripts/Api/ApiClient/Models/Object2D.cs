@@ -2,8 +2,14 @@ using System;
 using UnityEngine;
 
 [Serializable]
-public class Object2D
+public class object2D : MonoBehaviour
 {
-    
-
+    public string id;
+    public string PrefabId;
+    public int PositionX;
+    public int PositionY;
+    public int ScaleX;
+    public int ScaleY;
+    public int RotationZ;
+    public string environmentId;
 }

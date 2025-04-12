@@ -55,6 +55,14 @@ public class WebClient : MonoBehaviour
         return webRequest;
     }
 
+    public async Awaitable<IWebRequestReponse> SendPutRequest(string route, string data)
+    {
+        string url = $"{baseUrl}{route}";
+        UnityWebRequest webRequest = CreateWebRequest("PUT", url, data);
+        return await SendWebRequest(webRequest);
+    }
+
+
     private string RemoveIdFromJson(string json)
     {
         return json?.Replace("\"id\":\"\",", "");
@@ -73,6 +81,7 @@ public class WebClient : MonoBehaviour
         }
     }
 
+
     private void AddToken(UnityWebRequest webRequest)
     {
         if (!string.IsNullOrEmpty(token))
@@ -88,4 +97,3 @@ public class Token
     public string tokenType;
     public string accessToken;
 }
-

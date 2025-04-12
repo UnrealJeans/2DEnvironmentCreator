@@ -6,10 +6,23 @@ using UnityEngine.UI;
 
 public class ObjectManager : MonoBehaviour
 {
+    [Header("API zooi")]
+    private List<GameObject> placedObjects;
+    public EnvironmentApiClient apiClient;
+    public object2DApiClient object2DApiClient;
+    public string environmentId;
+    public string objectId;
+
+
     [Header("UI Elements")]
     // Menu om objecten vanuit te plaatsen
     public GameObject UISideMenu;
     public GameObject UITopMenu;
+
+    [Header("UITopMenu")]
+    public Button Save;
+    public Button Return;
+
 
     // Lijst met objecten die geplaatst kunnen worden die overeenkomen met de prefabs in de prefabs map
     public List<GameObject> prefabObjects;
@@ -31,7 +44,7 @@ public class ObjectManager : MonoBehaviour
     public GameObject rotationPreview; // Object containing the rotation text
 
     // Lijst met objecten die geplaatst zijn in de wereld
-    private List<GameObject> placedObjects;
+
 
     private void Start()
     {
