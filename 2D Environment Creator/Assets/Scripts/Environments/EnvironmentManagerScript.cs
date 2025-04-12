@@ -23,6 +23,8 @@ namespace Environments
         public Button MaakEnvironmentButton;
         public Button TerugNaarSelectie;
         public TMP_InputField EnvironmentNaam;
+        public GameObject Warning;
+        public GameObject Warning2;
 
         [Header("Prefab zooi")]
         public int aantalEnvironmentsAangemaakt = 0;
@@ -78,10 +80,31 @@ namespace Environments
         public async void MaakEnvironment()
         {
             Debug.Log("MaakEnvironment() function started!");
+            Warning.SetActive(false); // Hide Warning
+            Warning2.SetActive(false); // Hide Warning2
 
             if (EnvironmentNaam == null || string.IsNullOrWhiteSpace(EnvironmentNaam.text))
             {
                 Debug.LogError("EnvironmentNaam is NULL or empty!");
+                Warning2.SetActive(true); // Show Warning2 for invalid input
+                return;
+            }
+
+            string newEnvironmentName = EnvironmentNaam.text.Trim();
+
+            // Check if the name length is valid
+            if (newEnvironmentName.Length < 1 || newEnvironmentName.Length > 25)
+            {
+                Debug.LogError($"Environment name '{newEnvironmentName}' is not between 1 and 25 characters!");
+                Warning2.SetActive(true); // Show Warning2 for invalid length
+                return;
+            }
+
+            // Check if an environment with the same name already exists
+            if (environments.Exists(env => env.name.Equals(newEnvironmentName, StringComparison.OrdinalIgnoreCase)))
+            {
+                Debug.LogError($"An environment with the name '{newEnvironmentName}' already exists!");
+                Warning.SetActive(true); // Show Warning for duplicate name
                 return;
             }
 
@@ -89,7 +112,7 @@ namespace Environments
             var newEnvironment = new Environment
             {
                 id = Guid.NewGuid().ToString(),
-                name = EnvironmentNaam.text
+                name = newEnvironmentName
             };
 
             try
@@ -99,6 +122,9 @@ namespace Environments
                 {
                     environments.Add(createdEnvironmentData.Data);
                     Debug.Log("Environment created successfully via API: " + createdEnvironmentData.Data.name);
+
+                    // Clear the input field after successful creation
+                    EnvironmentNaam.text = string.Empty;
                 }
                 else
                 {
