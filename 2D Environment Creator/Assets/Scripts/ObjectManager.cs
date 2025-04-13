@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Environments;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -7,11 +8,12 @@ using UnityEngine.UI;
 public class ObjectManager : MonoBehaviour
 {
     [Header("API zooi")]
+    public EnvironmentManagerScript environmentManagerScript;
     private List<GameObject> placedObjects;
     public EnvironmentApiClient apiClient;
     public object2DApiClient object2DApiClient;
     public string environmentId;
-    public string objectId;
+
 
 
     [Header("UI Elements")]
@@ -20,8 +22,11 @@ public class ObjectManager : MonoBehaviour
     public GameObject UITopMenu;
 
     [Header("UITopMenu")]
+    public Button FirstSave;
     public Button Save;
+    public Button Load;
     public Button Return;
+
 
 
     // Lijst met objecten die geplaatst kunnen worden die overeenkomen met de prefabs in de prefabs map
@@ -52,6 +57,7 @@ public class ObjectManager : MonoBehaviour
         sizeSmall.onClick.AddListener(() => SetSize("Small"));
         sizeMedium.onClick.AddListener(() => SetSize("Medium"));
         sizeLarge.onClick.AddListener(() => SetSize("Large"));
+        environmentId = environmentManagerScript.Test.text.Replace("Environment ID: ", "").Trim();
 
         // Add listener to the slider
         rotationSlider.onValueChanged.AddListener(SetRotation);
@@ -59,7 +65,14 @@ public class ObjectManager : MonoBehaviour
         // Initialize the rotation text and preview
         UpdateRotationText();
         UpdateRotationPreview();
+
+        // Add listeners for save/load buttons
+        FirstSave.onClick.AddListener(FirstSaveEnvironment);
+        Save.onClick.AddListener(SaveEnvironment);
+        Load.onClick.AddListener(LoadEnvironment);
     }
+
+
 
     private void SetSize(string size)
     {
@@ -134,11 +147,12 @@ public class ObjectManager : MonoBehaviour
         instanceOfPrefab.transform.rotation = Quaternion.Euler(0, 0, Rotation);
     }
 
+
     // Methode om het menu te tonen
     public void ShowMenu()
     {
         UISideMenu.SetActive(true);
-        UITopMenu.SetActive(false);
+        UITopMenu.SetActive(true);
     }
 
     // Methode om de huidige scène te resetten
@@ -147,4 +161,100 @@ public class ObjectManager : MonoBehaviour
         // Laad de huidige scène opnieuw
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
+
+    private void FirstSaveEnvironment()
+    {
+        if (string.IsNullOrEmpty(environmentId))
+        {
+            Debug.LogError("Environment ID is not set. Cannot perform FirstSave.");
+            return;
+        }
+
+        if (savedObjects.Any(o => o.environmentId == environmentId))
+        {
+            Debug.LogError("Environment already has saved objects. Use Save instead.");
+            return;
+        }
+
+        SaveEnvironmentData();
+        Debug.Log("First save completed successfully.");
+    }
+
+    private void SaveEnvironment()
+    {
+        if (string.IsNullOrEmpty(environmentId))
+        {
+            Debug.LogError("Environment ID is not set. Cannot perform Save.");
+            return;
+        }
+
+        // Remove existing objects for this environment before saving
+        savedObjects.RemoveAll(o => o.environmentId == environmentId);
+
+        SaveEnvironmentData();
+        Debug.Log("Environment saved successfully.");
+    }
+
+    private void LoadEnvironment()
+    {
+        if (string.IsNullOrEmpty(environmentId))
+        {
+            Debug.LogError("Environment ID is not set. Cannot perform Load.");
+            return;
+        }
+
+        // Find saved objects for the current environment
+        var objectsToLoad = savedObjects.Where(o => o.environmentId == environmentId).ToList();
+
+        if (objectsToLoad.Count == 0)
+        {
+            Debug.LogError("No saved objects found for this environment.");
+            return;
+        }
+
+        // Clear existing objects in the scene
+        foreach (GameObject obj in placedObjects)
+        {
+            Destroy(obj);
+        }
+        placedObjects.Clear();
+
+        // Instantiate saved objects
+        foreach (var objData in objectsToLoad)
+        {
+            GameObject prefab = prefabObjects.Find(p => p.name == objData.PrefabId);
+            if (prefab != null)
+            {
+                GameObject instance = Instantiate(prefab, new Vector3(objData.PositionX, objData.PositionY, 0), Quaternion.Euler(0, 0, objData.RotationZ));
+                instance.transform.localScale = new Vector3(objData.ScaleX, objData.ScaleY, 1);
+                placedObjects.Add(instance);
+            }
+        }
+
+        Debug.Log("Environment loaded successfully.");
+    }
+
+    private void SaveEnvironmentData()
+    {
+        foreach (GameObject obj in placedObjects)
+        {
+            Object2D object2D = obj.GetComponent<Object2D>();
+            if (object2D != null)
+            {
+                savedObjects.Add(new object2D
+                {
+                    id = object2D.id,
+                    PrefabId = obj.name,
+                    PositionX = Mathf.RoundToInt(obj.transform.position.x),
+                    PositionY = Mathf.RoundToInt(obj.transform.position.y),
+                    ScaleX = Mathf.RoundToInt(obj.transform.localScale.x),
+                    ScaleY = Mathf.RoundToInt(obj.transform.localScale.y),
+                    RotationZ = Mathf.RoundToInt(obj.transform.rotation.eulerAngles.z),
+                    environmentId = environmentId
+                });
+            }
+        }
+    }
+
+
 }
