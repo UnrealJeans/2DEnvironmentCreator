@@ -12,7 +12,7 @@ public class ObjectManager : MonoBehaviour
     private List<GameObject> placedObjects;
     public EnvironmentApiClient apiClient;
     public object2DApiClient object2DApiClient;
-    public string environmentId;
+    private string environmentId;
 
 
 
@@ -20,12 +20,14 @@ public class ObjectManager : MonoBehaviour
     // Menu om objecten vanuit te plaatsen
     public GameObject UISideMenu;
     public GameObject UITopMenu;
+    public GameObject EnvironmentSelector;
 
     [Header("UITopMenu")]
     public Button FirstSave;
     public Button Save;
     public Button Load;
     public Button Return;
+    public Button ResetButton;
     public GameObject ObjectPrison;
 
 
@@ -59,6 +61,10 @@ public class ObjectManager : MonoBehaviour
         sizeSmall.onClick.AddListener(() => SetSize("Small"));
         sizeMedium.onClick.AddListener(() => SetSize("Medium"));
         sizeLarge.onClick.AddListener(() => SetSize("Large"));
+
+        Return.onClick.AddListener(ReturnBut);
+        ResetButton.onClick.AddListener(DestroyAllPlacedObjects);
+
         environmentId = environmentManagerScript.Test.text.Replace("Environment ID: ", "").Trim();
 
         // Add listener to the slider
@@ -71,6 +77,18 @@ public class ObjectManager : MonoBehaviour
         // Add listeners for save/load buttons
         FirstSave.onClick.AddListener(SaveEnvironmentObjects);
         Load.onClick.AddListener(LoadObjectsForActiveEnvironment);
+    }
+
+    private void ReturnBut()
+    {
+        // Hide the side menu and top menu
+        UISideMenu.SetActive(false);
+        UITopMenu.SetActive(false);
+
+        // Destroy all placed objects
+        DestroyAllPlacedObjects();
+        EnvironmentSelector.SetActive(true);
+
     }
 
     private void SetSize(string size)
