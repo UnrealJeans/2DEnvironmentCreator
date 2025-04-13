@@ -27,10 +27,6 @@ public class object2DApiClient : MonoBehaviour
         return ParseObject2DListResponse(webRequestResponse);
     }
 
-
-
-
-
     public async Awaitable<IWebRequestReponse> CreateObject2D(object2D object2D)
     {
         string route = $"/api/environment/{object2D.environmentId}/objects";
@@ -47,8 +43,6 @@ public class object2DApiClient : MonoBehaviour
         return response;
     }
 
-
-
     public async Awaitable<IWebRequestReponse> UpdateObject2D(object2D object2D)
     {
         string route = "/environment/" + object2D.environmentId + "/objects/" + object2D.id;
@@ -56,6 +50,25 @@ public class object2DApiClient : MonoBehaviour
 
         return await webClient.SendPutRequest(route, data);
     }
+
+    public async Awaitable<IWebRequestReponse> DeleteObject2D(string environmentId, string objectId)
+    {
+        string route = $"/api/environment/{environmentId}/objects/{objectId}";
+        Debug.Log($"Sending DELETE request to: {webClient.baseUrl}{route}");
+
+        var response = await webClient.SendDeleteRequest(route);
+        if (response is WebRequestError error)
+        {
+            Debug.LogError($"DeleteObject2D failed: {error.ErrorMessage}");
+        }
+        else
+        {
+            Debug.Log($"Successfully deleted Object2D with ID: {objectId}");
+        }
+
+        return response;
+    }
+
 
     private IWebRequestReponse ParseObject2DResponse(IWebRequestReponse webRequestResponse)
     {
@@ -100,5 +113,4 @@ public class object2DApiClient : MonoBehaviour
                 return webRequestResponse;
         }
     }
-
 }

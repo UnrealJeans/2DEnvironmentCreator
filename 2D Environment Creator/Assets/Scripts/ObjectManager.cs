@@ -68,8 +68,7 @@ public class ObjectManager : MonoBehaviour
         UpdateRotationPreview();
 
         // Add listeners for save/load buttons
-        FirstSave.onClick.AddListener(FirstSaveEnvironment);
-        Save.onClick.AddListener(SaveEnvironment);
+        FirstSave.onClick.AddListener(SaveEnvironmentObjects);
         Load.onClick.AddListener(LoadObjectsForActiveEnvironment);
     }
 
@@ -164,50 +163,45 @@ public class ObjectManager : MonoBehaviour
         UITopMenu.SetActive(true);
     }
 
-    private async void FirstSaveEnvironment()
+    private async void SaveEnvironmentObjects()
     {
+        if (string.IsNullOrEmpty(environmentId))
+        {
+            Debug.LogError("Environment ID is not set.");
+            return;
+        }
+
+        // Fetch all existing objects for the current environment
+        var existingObjectsResponse = await object2DApiClient.ReadObject2Ds(environmentId);
+        if (existingObjectsResponse is WebRequestData<List<object2D>> existingObjectsData)
+        {
+            List<object2D> existingObjects = existingObjectsData.Data;
+
+            // Delete each existing object
+            foreach (var existingObject in existingObjects)
+            {
+                await object2DApiClient.DeleteObject2D(environmentId, existingObject.id);
+                Debug.Log($"Deleted object with ID: {existingObject.id}");
+            }
+
+        }
+        else
+        {
+            Debug.LogError("Failed to fetch existing objects for deletion.");
+            return;
+        }
+
         if (placedObjects == null || placedObjects.Count == 0)
         {
             Debug.LogWarning("No objects to save.");
             return;
         }
-
+        // Save the new objects
         foreach (var placedObject in placedObjects)
         {
-            // Create a new object2D instance based on the placed object
             object2D newObject = new object2D
             {
-                id = Guid.NewGuid().ToString(), // Generate a unique ID for the object
-                prefabId = placedObject.name, // Assuming the prefab name is used as the ID
-                PositionX = Mathf.RoundToInt(placedObject.transform.position.x),
-                PositionY = Mathf.RoundToInt(placedObject.transform.position.y),
-                ScaleX = Mathf.RoundToInt(placedObject.transform.localScale.x * 100), // Convert scale to int
-                ScaleY = Mathf.RoundToInt(placedObject.transform.localScale.y * 100),
-                RotationZ = Mathf.RoundToInt(placedObject.transform.rotation.eulerAngles.z),
-                environmentId = environmentId
-            };
-
-            // Save the object using the API client
-            await object2DApiClient.CreateObject2D(newObject);
-        }
-
-        Debug.Log("First save completed.");
-    }
-
-    private async void SaveEnvironment()
-    {
-        if (placedObjects == null || placedObjects.Count == 0)
-        {
-            Debug.LogWarning("No objects to save.");
-            return;
-        }
-
-        foreach (var placedObject in placedObjects)
-        {
-            // Create or update an object2D instance based on the placed object
-            object2D updatedObject = new object2D
-            {
-                id = placedObject.GetComponent<Object2D>().objectManager.environmentId, // Assuming the ID is stored in the Object2D component
+                id = Guid.NewGuid().ToString(),
                 prefabId = placedObject.name,
                 PositionX = Mathf.RoundToInt(placedObject.transform.position.x),
                 PositionY = Mathf.RoundToInt(placedObject.transform.position.y),
@@ -217,12 +211,16 @@ public class ObjectManager : MonoBehaviour
                 environmentId = environmentId
             };
 
-            // Update the object using the API client
-            await object2DApiClient.UpdateObject2D(updatedObject);
+            Debug.Log($"Saving object: ID={newObject.id}, PositionX={newObject.PositionX}, PositionY={newObject.PositionY}");
+
+            await object2DApiClient.CreateObject2D(newObject);
         }
 
-        Debug.Log("Save completed.");
+
+
+        Debug.Log("Save operation completed.");
     }
+
 
     public async void LoadObjectsForActiveEnvironment()
     {
@@ -231,7 +229,7 @@ public class ObjectManager : MonoBehaviour
             Debug.LogError("Active environment ID is not set.");
             return;
         }
-
+        DestroyAllPlacedObjects();
         if (objectsLoaded)
         {
             Debug.Log("Objects have already been loaded for this environment.");
@@ -312,13 +310,5 @@ public class ObjectManager : MonoBehaviour
     public void Reset()
     {
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
-    }
-
-    private void Update()
-    {
-        if (Input.GetKeyDown(KeyCode.Return))
-        {
-            LoadObjectsForActiveEnvironment();
-        }
     }
 }
