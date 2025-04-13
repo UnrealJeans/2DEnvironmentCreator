@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 
 [Serializable]
-public class object2D : MonoBehaviour
+public class object2D
 {
     public string id;
     public string PrefabId;

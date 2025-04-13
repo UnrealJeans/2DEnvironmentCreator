@@ -10,11 +10,24 @@ public class object2DApiClient : MonoBehaviour
 
     public async Awaitable<IWebRequestReponse> ReadObject2Ds(string environmentId)
     {
-        string route = "/environment/" + environmentId + "/objects";
+        string route = "/api/environment/" + environmentId + "/objects"; // Updated route
+        Debug.Log($"Sending GET request to: {webClient.baseUrl}{route}");
 
         IWebRequestReponse webRequestResponse = await webClient.SendGetRequest(route);
+
+        if (webRequestResponse is WebRequestData<string> data)
+        {
+            Debug.Log($"Raw response data: {data.Data}");
+        }
+        else
+        {
+            Debug.LogError("Failed to retrieve object2D data.");
+        }
+
         return ParseObject2DListResponse(webRequestResponse);
     }
+
+
 
     public async Awaitable<IWebRequestReponse> CreateObject2D(object2D object2D)
     {
@@ -53,11 +66,28 @@ public class object2DApiClient : MonoBehaviour
         {
             case WebRequestData<string> data:
                 Debug.Log("Response data raw: " + data.Data);
-                List<Object2D> environments = JsonHelper.ParseJsonArray<Object2D>(data.Data);
-                WebRequestData<List<Object2D>> parsedData = new WebRequestData<List<Object2D>>(environments);
-                return parsedData;
+
+                if (string.IsNullOrEmpty(data.Data))
+                {
+                    Debug.LogError("API response is empty.");
+                    return new WebRequestError("Empty response from API.");
+                }
+
+                try
+                {
+                    List<object2D> objects = JsonHelper.ParseJsonArray<object2D>(data.Data);
+                    return new WebRequestData<List<object2D>>(objects);
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogError($"Failed to parse API response: {ex.Message}");
+                    return new WebRequestError("Failed to parse API response.");
+                }
+
             default:
+                Debug.LogError("Unexpected response type.");
                 return webRequestResponse;
         }
     }
+
 }

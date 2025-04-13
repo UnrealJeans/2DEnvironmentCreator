@@ -72,8 +72,6 @@ public class ObjectManager : MonoBehaviour
         Load.onClick.AddListener(LoadEnvironment);
     }
 
-
-
     private void SetSize(string size)
     {
         // Set the corresponding size bool to true and others to false
@@ -145,7 +143,17 @@ public class ObjectManager : MonoBehaviour
 
         // Apply the rotation to the object
         instanceOfPrefab.transform.rotation = Quaternion.Euler(0, 0, Rotation);
+
+        // Initialize the placedObjects list if it is null
+        if (placedObjects == null)
+        {
+            placedObjects = new List<GameObject>();
+        }
+
+        // Add the newly placed object to the placedObjects list
+        placedObjects.Add(instanceOfPrefab);
     }
+
 
 
     // Methode om het menu te tonen
@@ -155,105 +163,120 @@ public class ObjectManager : MonoBehaviour
         UITopMenu.SetActive(true);
     }
 
+    private async void FirstSaveEnvironment()
+    {
+        if (placedObjects == null || placedObjects.Count == 0)
+        {
+            Debug.LogWarning("No objects to save.");
+            return;
+        }
+
+        foreach (var placedObject in placedObjects)
+        {
+            // Create a new object2D instance based on the placed object
+            object2D newObject = new object2D
+            {
+                id = Guid.NewGuid().ToString(), // Generate a unique ID for the object
+                PrefabId = placedObject.name, // Assuming the prefab name is used as the ID
+                PositionX = Mathf.RoundToInt(placedObject.transform.position.x),
+                PositionY = Mathf.RoundToInt(placedObject.transform.position.y),
+                ScaleX = Mathf.RoundToInt(placedObject.transform.localScale.x * 100), // Convert scale to int
+                ScaleY = Mathf.RoundToInt(placedObject.transform.localScale.y * 100),
+                RotationZ = Mathf.RoundToInt(placedObject.transform.rotation.eulerAngles.z),
+                environmentId = environmentId
+            };
+
+            // Save the object using the API client
+            await object2DApiClient.CreateObject2D(newObject);
+        }
+
+        Debug.Log("First save completed.");
+    }
+
+    private async void SaveEnvironment()
+    {
+        if (placedObjects == null || placedObjects.Count == 0)
+        {
+            Debug.LogWarning("No objects to save.");
+            return;
+        }
+
+        foreach (var placedObject in placedObjects)
+        {
+            // Create or update an object2D instance based on the placed object
+            object2D updatedObject = new object2D
+            {
+                id = placedObject.GetComponent<Object2D>().objectManager.environmentId, // Assuming the ID is stored in the Object2D component
+                PrefabId = placedObject.name,
+                PositionX = Mathf.RoundToInt(placedObject.transform.position.x),
+                PositionY = Mathf.RoundToInt(placedObject.transform.position.y),
+                ScaleX = Mathf.RoundToInt(placedObject.transform.localScale.x * 100),
+                ScaleY = Mathf.RoundToInt(placedObject.transform.localScale.y * 100),
+                RotationZ = Mathf.RoundToInt(placedObject.transform.rotation.eulerAngles.z),
+                environmentId = environmentId
+            };
+
+            // Update the object using the API client
+            await object2DApiClient.UpdateObject2D(updatedObject);
+        }
+
+        Debug.Log("Save completed.");
+    }
+
+    private async void LoadEnvironment()
+    {
+        // Clear existing placed objects
+        if (placedObjects != null)
+        {
+            foreach (var obj in placedObjects)
+            {
+                Destroy(obj);
+            }
+        }
+        placedObjects = new List<GameObject>();
+
+        // Load objects from the API
+        var response = await object2DApiClient.ReadObject2Ds(environmentId);
+        if (response is WebRequestData<List<object2D>> data)
+        {
+            foreach (var objData in data.Data)
+            {
+                // Find the corresponding prefab
+                var prefab = prefabObjects.Find(p => p.name == objData.PrefabId);
+                if (prefab == null)
+                {
+                    Debug.LogWarning($"Prefab with ID {objData.PrefabId} not found.");
+                    continue;
+                }
+
+                // Instantiate the object
+                var instance = Instantiate(prefab, new Vector3(objData.PositionX, objData.PositionY, 0), Quaternion.Euler(0, 0, objData.RotationZ));
+                instance.transform.localScale = new Vector3(objData.ScaleX / 100f, objData.ScaleY / 100f, 1);
+
+                // Add the object to the placedObjects list
+                placedObjects.Add(instance);
+            }
+
+            Debug.Log("Environment loaded successfully.");
+        }
+        else if (response is WebRequestError error)
+        {
+            Debug.LogError($"Failed to load environment: {error.ErrorMessage}"); // Use ErrorMessage here
+        }
+        else
+        {
+            Debug.LogError("Failed to load environment: Unexpected response type.");
+        }
+    }
+
+
+
+
     // Methode om de huidige scène te resetten
     public void Reset()
     {
         // Laad de huidige scène opnieuw
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
-    }
-
-    private void FirstSaveEnvironment()
-    {
-        if (string.IsNullOrEmpty(environmentId))
-        {
-            Debug.LogError("Environment ID is not set. Cannot perform FirstSave.");
-            return;
-        }
-
-        if (savedObjects.Any(o => o.environmentId == environmentId))
-        {
-            Debug.LogError("Environment already has saved objects. Use Save instead.");
-            return;
-        }
-
-        SaveEnvironmentData();
-        Debug.Log("First save completed successfully.");
-    }
-
-    private void SaveEnvironment()
-    {
-        if (string.IsNullOrEmpty(environmentId))
-        {
-            Debug.LogError("Environment ID is not set. Cannot perform Save.");
-            return;
-        }
-
-        // Remove existing objects for this environment before saving
-        savedObjects.RemoveAll(o => o.environmentId == environmentId);
-
-        SaveEnvironmentData();
-        Debug.Log("Environment saved successfully.");
-    }
-
-    private void LoadEnvironment()
-    {
-        if (string.IsNullOrEmpty(environmentId))
-        {
-            Debug.LogError("Environment ID is not set. Cannot perform Load.");
-            return;
-        }
-
-        // Find saved objects for the current environment
-        var objectsToLoad = savedObjects.Where(o => o.environmentId == environmentId).ToList();
-
-        if (objectsToLoad.Count == 0)
-        {
-            Debug.LogError("No saved objects found for this environment.");
-            return;
-        }
-
-        // Clear existing objects in the scene
-        foreach (GameObject obj in placedObjects)
-        {
-            Destroy(obj);
-        }
-        placedObjects.Clear();
-
-        // Instantiate saved objects
-        foreach (var objData in objectsToLoad)
-        {
-            GameObject prefab = prefabObjects.Find(p => p.name == objData.PrefabId);
-            if (prefab != null)
-            {
-                GameObject instance = Instantiate(prefab, new Vector3(objData.PositionX, objData.PositionY, 0), Quaternion.Euler(0, 0, objData.RotationZ));
-                instance.transform.localScale = new Vector3(objData.ScaleX, objData.ScaleY, 1);
-                placedObjects.Add(instance);
-            }
-        }
-
-        Debug.Log("Environment loaded successfully.");
-    }
-
-    private void SaveEnvironmentData()
-    {
-        foreach (GameObject obj in placedObjects)
-        {
-            Object2D object2D = obj.GetComponent<Object2D>();
-            if (object2D != null)
-            {
-                savedObjects.Add(new object2D
-                {
-                    id = object2D.id,
-                    PrefabId = obj.name,
-                    PositionX = Mathf.RoundToInt(obj.transform.position.x),
-                    PositionY = Mathf.RoundToInt(obj.transform.position.y),
-                    ScaleX = Mathf.RoundToInt(obj.transform.localScale.x),
-                    ScaleY = Mathf.RoundToInt(obj.transform.localScale.y),
-                    RotationZ = Mathf.RoundToInt(obj.transform.rotation.eulerAngles.z),
-                    environmentId = environmentId
-                });
-            }
-        }
     }
 
 
