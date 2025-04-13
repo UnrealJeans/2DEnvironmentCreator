@@ -5,7 +5,7 @@ using UnityEngine;
 public class object2D
 {
     public string id;
-    public string PrefabId;
+    public string prefabId;
     public int PositionX;
     public int PositionY;
     public int ScaleX;

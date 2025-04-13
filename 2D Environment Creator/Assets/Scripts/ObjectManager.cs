@@ -47,6 +47,7 @@ public class ObjectManager : MonoBehaviour
     public Slider rotationSlider; // Slider for rotation
     public TMPro.TMP_Text rotationText; // Text to display the rotation value
     public GameObject rotationPreview; // Object containing the rotation text
+    private bool objectsLoaded;
 
     // Lijst met objecten die geplaatst zijn in de wereld
 
@@ -69,7 +70,7 @@ public class ObjectManager : MonoBehaviour
         // Add listeners for save/load buttons
         FirstSave.onClick.AddListener(FirstSaveEnvironment);
         Save.onClick.AddListener(SaveEnvironment);
-        Load.onClick.AddListener(LoadEnvironment);
+        Load.onClick.AddListener(LoadObjectsForActiveEnvironment);
     }
 
     private void SetSize(string size)
@@ -177,7 +178,7 @@ public class ObjectManager : MonoBehaviour
             object2D newObject = new object2D
             {
                 id = Guid.NewGuid().ToString(), // Generate a unique ID for the object
-                PrefabId = placedObject.name, // Assuming the prefab name is used as the ID
+                prefabId = placedObject.name, // Assuming the prefab name is used as the ID
                 PositionX = Mathf.RoundToInt(placedObject.transform.position.x),
                 PositionY = Mathf.RoundToInt(placedObject.transform.position.y),
                 ScaleX = Mathf.RoundToInt(placedObject.transform.localScale.x * 100), // Convert scale to int
@@ -207,7 +208,7 @@ public class ObjectManager : MonoBehaviour
             object2D updatedObject = new object2D
             {
                 id = placedObject.GetComponent<Object2D>().objectManager.environmentId, // Assuming the ID is stored in the Object2D component
-                PrefabId = placedObject.name,
+                prefabId = placedObject.name,
                 PositionX = Mathf.RoundToInt(placedObject.transform.position.x),
                 PositionY = Mathf.RoundToInt(placedObject.transform.position.y),
                 ScaleX = Mathf.RoundToInt(placedObject.transform.localScale.x * 100),
@@ -223,61 +224,101 @@ public class ObjectManager : MonoBehaviour
         Debug.Log("Save completed.");
     }
 
-    private async void LoadEnvironment()
+    public async void LoadObjectsForActiveEnvironment()
     {
-        // Clear existing placed objects
-        if (placedObjects != null)
+        if (string.IsNullOrEmpty(environmentId))
         {
-            foreach (var obj in placedObjects)
-            {
-                Destroy(obj);
-            }
+            Debug.LogError("Active environment ID is not set.");
+            return;
         }
-        placedObjects = new List<GameObject>();
 
-        // Load objects from the API
+        if (objectsLoaded)
+        {
+            Debug.Log("Objects have already been loaded for this environment.");
+            return;
+        }
+
+        Debug.Log($"Loading Object2Ds for environment ID: {environmentId}");
         var response = await object2DApiClient.ReadObject2Ds(environmentId);
-        if (response is WebRequestData<List<object2D>> data)
+
+        if (response is WebRequestData<List<object2D>> object2DListResponse)
         {
-            foreach (var objData in data.Data)
-            {
-                // Find the corresponding prefab
-                var prefab = prefabObjects.Find(p => p.name == objData.PrefabId);
-                if (prefab == null)
-                {
-                    Debug.LogWarning($"Prefab with ID {objData.PrefabId} not found.");
-                    continue;
-                }
-
-                // Instantiate the object
-                var instance = Instantiate(prefab, new Vector3(objData.PositionX, objData.PositionY, 0), Quaternion.Euler(0, 0, objData.RotationZ));
-                instance.transform.localScale = new Vector3(objData.ScaleX / 100f, objData.ScaleY / 100f, 1);
-
-                // Add the object to the placedObjects list
-                placedObjects.Add(instance);
-            }
-
-            Debug.Log("Environment loaded successfully.");
-        }
-        else if (response is WebRequestError error)
-        {
-            Debug.LogError($"Failed to load environment: {error.ErrorMessage}"); // Use ErrorMessage here
+            List<object2D> object2DList = object2DListResponse.Data;
+            Debug.Log($"Loaded {object2DList.Count} Object2Ds.");
+            InstantiateObjectsForEnvironment(object2DList);
+            objectsLoaded = true;
         }
         else
         {
-            Debug.LogError("Failed to load environment: Unexpected response type.");
+            Debug.LogError("Failed to load Object2Ds.");
+        }
+    }
+
+    private void InstantiateObjectsForEnvironment(List<object2D> object2DList)
+    {
+        if (object2DList == null)
+        {
+            Debug.LogError("object2DList is null.");
+            return;
+        }
+
+        foreach (var object2D in object2DList)
+        {
+            if (object2D.environmentId == environmentId)
+            {
+                // Strip the "(Clone)" suffix if present
+                string prefabName = object2D.prefabId.Replace("(Clone)", "").Trim();
+
+                // Find the prefab by name
+                GameObject prefab = prefabObjects.Find(p => p.name == prefabName);
+                if (prefab == null)
+                {
+                    Debug.LogError($"Prefab with name {prefabName} not found.");
+                    continue;
+                }
+
+                // Instantiate the prefab at the specified position
+                Vector3 position = new Vector3(object2D.PositionX, object2D.PositionY, 0);
+                GameObject instance = Instantiate(prefab, position, Quaternion.identity);
+
+                // Name the instance and parent it under a specific GameObject in the hierarchy
+                instance.name = $"{prefab.name}Clone{object2D.id}";
+                instance.transform.SetParent(this.transform);
+
+                // Add the instance to the placedObjects list
+                if (placedObjects == null)
+                {
+                    placedObjects = new List<GameObject>();
+                }
+
+                placedObjects.Add(instance);
+
+                // Log the instantiation
+                Debug.Log($"Instantiated {instance.name} at position {position}");
+            }
         }
     }
 
 
+    public void DestroyAllPlacedObjects()
+    {
+        foreach (var placedObject in placedObjects)
+        {
+            Destroy(placedObject);
+        }
+        placedObjects.Clear();
+    }
 
-
-    // Methode om de huidige scène te resetten
     public void Reset()
     {
-        // Laad de huidige scène opnieuw
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
-
+    private void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.Return))
+        {
+            LoadObjectsForActiveEnvironment();
+        }
+    }
 }

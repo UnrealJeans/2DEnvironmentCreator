@@ -10,7 +10,7 @@ public class object2DApiClient : MonoBehaviour
 
     public async Awaitable<IWebRequestReponse> ReadObject2Ds(string environmentId)
     {
-        string route = "/api/environment/" + environmentId + "/objects"; // Updated route
+        string route = "/api/environment/" + environmentId + "/objects";
         Debug.Log($"Sending GET request to: {webClient.baseUrl}{route}");
 
         IWebRequestReponse webRequestResponse = await webClient.SendGetRequest(route);
@@ -29,14 +29,25 @@ public class object2DApiClient : MonoBehaviour
 
 
 
+
+
     public async Awaitable<IWebRequestReponse> CreateObject2D(object2D object2D)
     {
-        string route = "/environment/" + object2D.environmentId + "/objects";
+        string route = $"/api/environment/{object2D.environmentId}/objects";
         string data = JsonUtility.ToJson(object2D);
 
-        IWebRequestReponse webRequestResponse = await webClient.SendPostRequest(route, data);
-        return ParseObject2DResponse(webRequestResponse);
+        Debug.Log($"POST Request URL: {webClient.baseUrl}{route}");
+        Debug.Log($"POST Request Body: {data}");
+
+        var response = await webClient.SendPostRequest(route, data);
+        if (response is WebRequestError error)
+        {
+            Debug.LogError($"CreateObject2D failed: {error.ErrorMessage}");
+        }
+        return response;
     }
+
+
 
     public async Awaitable<IWebRequestReponse> UpdateObject2D(object2D object2D)
     {

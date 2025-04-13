@@ -99,7 +99,7 @@ GameObject:
   - component: {fileID: 5634909332409542170}
   - component: {fileID: 206695286524191361}
   m_Layer: 0
-  m_Name: RedDie3Prefab
+  m_Name: RedDieThreePrefab
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
