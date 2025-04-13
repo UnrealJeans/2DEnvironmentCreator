@@ -1,15 +1,14 @@
 using System;
-using UnityEngine;
 
 [Serializable]
 public class object2D
 {
     public string id;
     public string prefabId;
-    public int PositionX;
-    public int PositionY;
-    public int ScaleX;
-    public int ScaleY;
-    public int RotationZ;
+    public int positionX; // Changed from PositionX
+    public int positionY; // Changed from PositionY
+    public int scaleX;    // Changed from ScaleX
+    public int scaleY;    // Changed from ScaleY
+    public int rotationZ; // Changed from RotationZ
     public string environmentId;
 }

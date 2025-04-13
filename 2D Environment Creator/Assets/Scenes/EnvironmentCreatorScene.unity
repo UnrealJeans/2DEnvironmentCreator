@@ -2857,6 +2857,37 @@ RectTransform:
   m_AnchoredPosition: {x: 14, y: -349}
   m_SizeDelta: {x: 229.6, y: 84.4}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!1 &409583799
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 409583800}
+  m_Layer: 0
+  m_Name: ObjectPrison
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &409583800
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 409583799}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1304276508}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &481233599
 GameObject:
   m_ObjectHideFlags: 0
@@ -3274,14 +3305,13 @@ Camera:
   m_OcclusionCulling: 0
   m_StereoConvergence: 10
   m_StereoSeparation: 0.022
---- !u!4 &519420032
-Transform:
+--- !u!224 &519420032
+RectTransform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 519420028}
-  serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
@@ -3289,6 +3319,11 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 100, y: 100}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &531777962
 GameObject:
   m_ObjectHideFlags: 0
@@ -3985,7 +4020,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0, b: 0, a: 1}
+  m_Color: {r: 1, g: 0, b: 0, a: 0}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -4057,7 +4092,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0, b: 0, a: 1}
+  m_Color: {r: 1, g: 0, b: 0, a: 0}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -4123,16 +4158,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ef0eb77f0a67099489d000bf3d0d0bf1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  environmentManagerScript: {fileID: 1252509071}
   apiClient: {fileID: 596449630}
   object2DApiClient: {fileID: 1351228883}
   environmentId: 
-  environmentManager: {fileID: 1252509071}
   UISideMenu: {fileID: 2145693211}
   UITopMenu: {fileID: 121037782}
-  FirstSaveButton: {fileID: 657669615}
+  FirstSave: {fileID: 657669615}
   Save: {fileID: 1278462353}
   Load: {fileID: 397036595}
   Return: {fileID: 1057672896}
+  ObjectPrison: {fileID: 519420028}
   prefabObjects:
   - {fileID: 2319415190314549223, guid: 9ee8f2a6d2bfc834085517b945847658, type: 3}
   - {fileID: 2319415190314549223, guid: 955d9cc5bb7d6b745a4615e0dcd8a0e4, type: 3}
@@ -7170,6 +7206,7 @@ Transform:
   - {fileID: 121037783}
   - {fileID: 2145693212}
   - {fileID: 2075021426}
+  - {fileID: 409583800}
   m_Father: {fileID: 1490842135}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1305289086
@@ -8588,7 +8625,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0, b: 0, a: 1}
+  m_Color: {r: 1, g: 0, b: 0, a: 0}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -13765,7 +13802,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0, b: 0, a: 1}
+  m_Color: {r: 1, g: 0, b: 0, a: 0}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -14454,6 +14491,6 @@ SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
   - {fileID: 30142923}
-  - {fileID: 519420032}
   - {fileID: 1857511782}
   - {fileID: 1490842135}
+  - {fileID: 519420032}

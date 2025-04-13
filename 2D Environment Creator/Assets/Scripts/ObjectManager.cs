@@ -26,6 +26,7 @@ public class ObjectManager : MonoBehaviour
     public Button Save;
     public Button Load;
     public Button Return;
+    public GameObject ObjectPrison;
 
 
 
@@ -118,6 +119,12 @@ public class ObjectManager : MonoBehaviour
         // Instantieer het prefab object op de positie (0,0,0) met geen rotatie
         GameObject instanceOfPrefab = Instantiate(prefabObjects[index], Vector3.zero, Quaternion.identity);
 
+        // Set the parent of the object to ObjectPrison
+        if (ObjectPrison != null)
+        {
+            instanceOfPrefab.transform.SetParent(ObjectPrison.transform);
+        }
+
         // Haal het Object2D component op van het nieuw geplaatste object
         Object2D object2D = instanceOfPrefab.GetComponent<Object2D>();
 
@@ -130,15 +137,15 @@ public class ObjectManager : MonoBehaviour
         // Set the size of the object based on the active size
         if (Small)
         {
-            instanceOfPrefab.transform.localScale = new Vector3(0.4f, 0.4f, 0.4f);
+            instanceOfPrefab.transform.localScale = new Vector3(0.40f, 0.40f, 0.40f);
         }
         else if (Medium)
         {
-            instanceOfPrefab.transform.localScale = new Vector3(0.8f, 0.8f, 0.8f);
+            instanceOfPrefab.transform.localScale = new Vector3(0.80f, 0.80f, 0.80f);
         }
         else if (Large)
         {
-            instanceOfPrefab.transform.localScale = new Vector3(1.5f, 1.5f, 1.5f);
+            instanceOfPrefab.transform.localScale = new Vector3(1.50f, 1.50f, 1.50f);
         }
 
         // Apply the rotation to the object
@@ -153,6 +160,7 @@ public class ObjectManager : MonoBehaviour
         // Add the newly placed object to the placedObjects list
         placedObjects.Add(instanceOfPrefab);
     }
+
 
 
 
@@ -203,15 +211,15 @@ public class ObjectManager : MonoBehaviour
             {
                 id = Guid.NewGuid().ToString(),
                 prefabId = placedObject.name,
-                PositionX = Mathf.RoundToInt(placedObject.transform.position.x),
-                PositionY = Mathf.RoundToInt(placedObject.transform.position.y),
-                ScaleX = Mathf.RoundToInt(placedObject.transform.localScale.x * 100),
-                ScaleY = Mathf.RoundToInt(placedObject.transform.localScale.y * 100),
-                RotationZ = Mathf.RoundToInt(placedObject.transform.rotation.eulerAngles.z),
+                positionX = Mathf.RoundToInt(placedObject.transform.position.x),
+                positionY = Mathf.RoundToInt(placedObject.transform.position.y),
+                scaleX = Mathf.RoundToInt(placedObject.transform.localScale.x ),
+                scaleY = Mathf.RoundToInt(placedObject.transform.localScale.y ),
+                rotationZ = Mathf.RoundToInt(placedObject.transform.rotation.eulerAngles.z),
                 environmentId = environmentId
             };
 
-            Debug.Log($"Saving object: ID={newObject.id}, PositionX={newObject.PositionX}, PositionY={newObject.PositionY}");
+            Debug.Log($"Saving object: ID={newObject.id}, PositionX={newObject.positionX}, PositionY={newObject.positionY}");
 
             await object2DApiClient.CreateObject2D(newObject);
         }
@@ -229,12 +237,9 @@ public class ObjectManager : MonoBehaviour
             Debug.LogError("Active environment ID is not set.");
             return;
         }
+
+        // Clear previously placed objects
         DestroyAllPlacedObjects();
-        if (objectsLoaded)
-        {
-            Debug.Log("Objects have already been loaded for this environment.");
-            return;
-        }
 
         Debug.Log($"Loading Object2Ds for environment ID: {environmentId}");
         var response = await object2DApiClient.ReadObject2Ds(environmentId);
@@ -244,13 +249,13 @@ public class ObjectManager : MonoBehaviour
             List<object2D> object2DList = object2DListResponse.Data;
             Debug.Log($"Loaded {object2DList.Count} Object2Ds.");
             InstantiateObjectsForEnvironment(object2DList);
-            objectsLoaded = true;
         }
         else
         {
             Debug.LogError("Failed to load Object2Ds.");
         }
     }
+
 
     private void InstantiateObjectsForEnvironment(List<object2D> object2DList)
     {
@@ -264,10 +269,7 @@ public class ObjectManager : MonoBehaviour
         {
             if (object2D.environmentId == environmentId)
             {
-                // Strip the "(Clone)" suffix if present
                 string prefabName = object2D.prefabId.Replace("(Clone)", "").Trim();
-
-                // Find the prefab by name
                 GameObject prefab = prefabObjects.Find(p => p.name == prefabName);
                 if (prefab == null)
                 {
@@ -275,37 +277,72 @@ public class ObjectManager : MonoBehaviour
                     continue;
                 }
 
-                // Instantiate the prefab at the specified position
-                Vector3 position = new Vector3(object2D.PositionX, object2D.PositionY, 0);
-                GameObject instance = Instantiate(prefab, position, Quaternion.identity);
+                Debug.Log($"Object2D Data: PositionX={object2D.positionX}, PositionY={object2D.positionY}");
+                Vector3 position = new Vector3(object2D.positionX, object2D.positionY, 0f);
+                Debug.Log($"Calculated position: {position}");
 
-                // Name the instance and parent it under a specific GameObject in the hierarchy
-                instance.name = $"{prefab.name}Clone{object2D.id}";
-                instance.transform.SetParent(this.transform);
+                GameObject instance = Instantiate(prefab);
+                instance.transform.SetParent(ObjectPrison.transform, false);
+                instance.transform.position = position; // Explicitly set world position
+                Debug.Log($"Instance position after parenting: {instance.transform.position}");
 
-                // Add the instance to the placedObjects list
+                instance.transform.localScale = GetObjectScale();
+                instance.transform.rotation = Quaternion.Euler(0, 0, object2D.rotationZ);
+
+                Object2D object2DComponent = instance.GetComponent<Object2D>();
+                if (object2DComponent != null)
+                {
+                    object2DComponent.objectManager = this;
+                    object2DComponent.isDragging = false;
+                }
+
                 if (placedObjects == null)
                 {
                     placedObjects = new List<GameObject>();
                 }
 
                 placedObjects.Add(instance);
-
-                // Log the instantiation
-                Debug.Log($"Instantiated {instance.name} at position {position}");
+                Debug.Log($"Instantiated {instance.name} at position {instance.transform.position}");
             }
         }
     }
 
 
+
+    private Vector3 GetObjectScale()
+    {
+        if (Small)
+            return new Vector3(0.40f, 0.40f, 0.40f);
+        if (Medium)
+            return new Vector3(0.80f, 0.80f, 0.80f);
+        if (Large)
+            return new Vector3(1.50f, 1.50f, 1.50f);
+
+        return Vector3.one; // Default scale
+    }
+
+
+
+
+
+
+
+
     public void DestroyAllPlacedObjects()
     {
+        if (placedObjects == null || placedObjects.Count == 0)
+        {
+            Debug.LogWarning("No placed objects to destroy.");
+            return;
+        }
+
         foreach (var placedObject in placedObjects)
         {
             Destroy(placedObject);
         }
         placedObjects.Clear();
     }
+
 
     public void Reset()
     {
